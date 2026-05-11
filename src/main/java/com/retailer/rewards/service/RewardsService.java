@@ -1,6 +1,8 @@
 package com.retailer.rewards.service;
 
 import com.retailer.rewards.dto.RewardResponse;
+import com.retailer.rewards.exception.CustomerNotFoundException;
+import com.retailer.rewards.exception.InvalidTransactionAmountException;
 import com.retailer.rewards.model.Customer;
 import com.retailer.rewards.model.Transaction;
 import com.retailer.rewards.repository.CustomerRepository;
@@ -32,6 +34,10 @@ public class RewardsService {
      * 1 point for every dollar spent between $50 and $100.
      */
     public int calculatePoints(double amount) {
+        if (amount < 0) {
+            throw new InvalidTransactionAmountException(amount);
+        }
+
         int points = 0;
         int dollars = (int) amount;
 
@@ -46,7 +52,7 @@ public class RewardsService {
 
     public RewardResponse getRewardsForCustomer(Long customerId) {
         Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new RuntimeException("Customer not found with id: " + customerId));
+                .orElseThrow(() -> new CustomerNotFoundException(customerId));
 
         List<Transaction> transactions = transactionRepository.findByCustomerId(customerId);
         return buildRewardResponse(customer, transactions);

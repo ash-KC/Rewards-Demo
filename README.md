@@ -1,8 +1,10 @@
 # Customer Rewards Program
 
-A Spring Boot REST API that calculates reward points for a retailer's customers based on their purchase transactions.
+A Spring Boot REST API that calculates reward points for a retailer's loyalty program based on purchase transactions over a three-month period.
 
-## Points Calculation
+## Problem Statement
+
+A retailer offers a rewards program to its customers, awarding points based on each recorded purchase:
 
 - **2 points** for every dollar spent **over $100** in each transaction
 - **1 point** for every dollar spent **between $50 and $100** in each transaction
@@ -11,25 +13,63 @@ A Spring Boot REST API that calculates reward points for a retailer's customers 
 
 ## Tech Stack
 
-- Java 17
-- Spring Boot 3.2.5
-- Spring Data JPA
-- H2 In-Memory Database
-- Maven
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Java | 17 | Language |
+| Spring Boot | 3.2.5 | Application framework |
+| Spring Data JPA | - | Data access layer |
+| H2 Database | - | In-memory database |
+| JUnit 5 | - | Unit testing |
+| Mockito | - | Mocking framework |
+| Maven | 3.6+ | Build tool |
+
+## Project Structure
+
+```
+src/
+├── main/java/com/retailer/rewards/
+│   ├── RewardsApplication.java           # Spring Boot entry point
+│   ├── controller/
+│   │   └── RewardsController.java        # REST API endpoints
+│   ├── dto/
+│   │   └── RewardResponse.java           # API response model
+│   ├── exception/
+│   │   ├── CustomerNotFoundException.java        # 404 exception
+│   │   ├── GlobalExceptionHandler.java           # Centralized error handling
+│   │   └── InvalidTransactionAmountException.java # 400 exception
+│   ├── model/
+│   │   ├── Customer.java                 # Customer entity
+│   │   └── Transaction.java              # Transaction entity
+│   ├── repository/
+│   │   ├── CustomerRepository.java       # Customer data access
+│   │   └── TransactionRepository.java    # Transaction data access
+│   └── service/
+│       └── RewardsService.java           # Business logic & points calculation
+├── main/resources/
+│   ├── application.properties            # App configuration
+│   └── data.sql                          # Sample data (3 customers, 17 transactions)
+└── test/java/com/retailer/rewards/
+    ├── controller/
+    │   └── RewardsControllerTest.java    # Integration tests (MockMvc)
+    ├── exception/
+    │   └── ExceptionTests.java           # Exception unit tests
+    └── service/
+        └── RewardsServiceTest.java       # Unit tests (Mockito)
+```
 
 ## Getting Started
 
 ### Prerequisites
 
-- Java 17+
-- Maven 3.6+
+- Java 17 or higher
+- Maven 3.6 or higher
 
 ### Build & Run
 
 ```bash
 # Clone the repository
-git clone https://github.com/<your-username>/rewards-program.git
-cd rewards-program
+git clone https://github.com/ash-KC/Rewards-Demo.git
+cd Rewards-Demo
 
 # Build the project
 mvn clean install
@@ -40,6 +80,16 @@ mvn spring-boot:run
 
 The application starts on **http://localhost:8080**.
 
+### Run Tests
+
+```bash
+# Run all tests
+mvn test
+
+# Run with verbose output
+mvn test -Dtest=RewardsServiceTest -Dsurefire.useFile=false
+```
+
 ## API Endpoints
 
 ### Get Rewards for All Customers
@@ -48,9 +98,7 @@ The application starts on **http://localhost:8080**.
 GET /api/rewards
 ```
 
-Returns monthly reward points and total for each customer.
-
-**Sample Response:**
+**Response:** `200 OK`
 
 ```json
 [
@@ -63,16 +111,6 @@ Returns monthly reward points and total for each customer.
       "March 2026": 60
     },
     "totalRewards": 430
-  },
-  {
-    "customerId": 2,
-    "customerName": "Bob Smith",
-    "monthlyRewards": {
-      "January 2026": 35,
-      "February 2026": 200,
-      "March 2026": 450
-    },
-    "totalRewards": 685
   }
 ]
 ```
@@ -81,6 +119,32 @@ Returns monthly reward points and total for each customer.
 
 ```
 GET /api/rewards/{customerId}
+```
+
+**Response:** `200 OK`
+
+```json
+{
+  "customerId": 1,
+  "customerName": "Alice Johnson",
+  "monthlyRewards": {
+    "January 2026": 115,
+    "February 2026": 255,
+    "March 2026": 60
+  },
+  "totalRewards": 430
+}
+```
+
+**Error Response:** `404 Not Found`
+
+```json
+{
+  "timestamp": "2026-01-15T10:30:00.123",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Customer not found with id: 999"
+}
 ```
 
 ### List All Customers
@@ -95,9 +159,39 @@ GET /api/customers
 GET /api/transactions
 ```
 
+## Error Handling
+
+The application uses a centralized exception handler (`@RestControllerAdvice`) providing consistent JSON error responses:
+
+| HTTP Status | Exception | Scenario |
+|-------------|-----------|----------|
+| 404 | `CustomerNotFoundException` | Customer ID does not exist |
+| 400 | `InvalidTransactionAmountException` | Negative transaction amount |
+| 500 | Generic | Unexpected server error |
+
 ## Sample Data
 
-The application loads sample data on startup with 3 customers and 17 transactions spanning January–March 2026.
+The application preloads sample data on startup (via `data.sql`) with:
+
+- **3 customers:** Alice Johnson, Bob Smith, Charlie Davis
+- **17 transactions** spanning January–March 2026
+- Covers edge cases: amounts below $50, exactly $50, between $50–$100, and over $100
+
+### Expected Reward Totals
+
+| Customer | January | February | March | Total |
+|----------|---------|----------|-------|-------|
+| Alice Johnson | 115 | 255 | 60 | 430 |
+| Bob Smith | 35 | 200 | 450 | 685 |
+| Charlie Davis | 110 | 10 | 200 | 320 |
+
+## H2 Database Console
+
+Available at **http://localhost:8080/h2-console** while the application is running.
+
+- **JDBC URL:** `jdbc:h2:mem:rewardsdb`
+- **Username:** `sa`
+- **Password:** *(empty)*
 
 | Customer       | Month    | Transactions                | Monthly Points |
 |----------------|----------|-----------------------------|----------------|
