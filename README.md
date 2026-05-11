@@ -153,11 +153,57 @@ GET /api/rewards/{customerId}
 GET /api/customers
 ```
 
+**Response:** `200 OK`
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Alice Johnson"
+  },
+  {
+    "id": 2,
+    "name": "Bob Smith"
+  },
+  {
+    "id": 3,
+    "name": "Charlie Davis"
+  }
+]
+```
+
 ### List All Transactions
 
 ```
 GET /api/transactions
 ```
+
+**Response:** `200 OK`
+
+```json
+[
+  {
+    "id": 1,
+    "customer": {
+      "id": 1,
+      "name": "Alice Johnson"
+    },
+    "amount": 120.00,
+    "transactionDate": "2026-01-10"
+  },
+  {
+    "id": 2,
+    "customer": {
+      "id": 1,
+      "name": "Alice Johnson"
+    },
+    "amount": 75.00,
+    "transactionDate": "2026-01-25"
+  }
+]
+```
+
+*Response truncated — returns all 17 transactions in the same format.*
 
 ## Error Handling
 
@@ -165,8 +211,11 @@ The application uses a centralized exception handler (`@RestControllerAdvice`) p
 
 | HTTP Status | Exception | Scenario |
 |-------------|-----------|----------|
-| 404 | `CustomerNotFoundException` | Customer ID does not exist |
+| 400 | `MethodArgumentTypeMismatchException` | Non-numeric customer ID (e.g. `/api/rewards/abc`) |
 | 400 | `InvalidTransactionAmountException` | Negative transaction amount |
+| 404 | `CustomerNotFoundException` | Customer ID does not exist |
+| 404 | `NoResourceFoundException` | Unknown endpoint (e.g. `/api/unknown`) |
+| 405 | `HttpRequestMethodNotSupportedException` | Wrong HTTP method (e.g. POST to a GET endpoint) |
 | 500 | Generic | Unexpected server error |
 
 ## Sample Data

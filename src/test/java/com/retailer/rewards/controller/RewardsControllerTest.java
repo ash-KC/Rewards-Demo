@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.hamcrest.Matchers.*;
 
@@ -118,5 +119,34 @@ class RewardsControllerTest {
                 .andExpect(jsonPath("$.monthlyRewards['January 2026']").exists())
                 .andExpect(jsonPath("$.monthlyRewards['February 2026']").exists())
                 .andExpect(jsonPath("$.monthlyRewards['March 2026']").exists());
+    }
+
+    @Test
+    @DisplayName("GET /api/rewards/abc - returns 400 for invalid customer ID type")
+    void getRewardsByCustomer_invalidIdType_returns400() throws Exception {
+        mockMvc.perform(get("/api/rewards/abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Invalid value")));
+    }
+
+    @Test
+    @DisplayName("POST /api/rewards - returns 405 for unsupported HTTP method")
+    void postToRewards_returns405() throws Exception {
+        mockMvc.perform(post("/api/rewards"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.status").value(405))
+                .andExpect(jsonPath("$.error").value("Method Not Allowed"))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("POST")));
+    }
+
+    @Test
+    @DisplayName("GET /api/nonexistent - returns 404 for unknown endpoint")
+    void getUnknownEndpoint_returns404() throws Exception {
+        mockMvc.perform(get("/api/nonexistent"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("The requested resource was not found"));
     }
 }
