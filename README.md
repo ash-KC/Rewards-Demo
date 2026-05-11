@@ -203,8 +203,6 @@ GET /api/transactions
 ]
 ```
 
-*Response truncated — returns all 17 transactions in the same format.*
-
 ## Error Handling
 
 The application uses a centralized exception handler (`@RestControllerAdvice`) providing consistent JSON error responses:
